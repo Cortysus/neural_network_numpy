@@ -115,8 +115,8 @@ class NeuralNetMixin:
         Z = cache
         exps = np.exp(Z - Z.max())
         s = exps / np.sum(exps, axis=0)
-        dZ = dA * s * (1 - s)
 
+        dZ = s - dA
         assert dZ.shape == Z.shape
 
         return dZ
@@ -165,8 +165,7 @@ class NeuralNetMixin:
                 -np.dot(Y, np.log(AL).T) - np.dot(1 - Y, np.log(1 - AL).T)
             )
         else:
-            temp = np.sum(np.log(AL) * Y, axis=0)
-            cost = (1.0 / m) * (-np.dot(temp, temp.T))
+            cost = -(1.0 / m) * np.sum(np.log(AL) * Y, axis=0).sum()
 
         cost = np.squeeze(cost)  # To make sure your cost's shape is what we expect
         assert cost.shape == ()
@@ -207,9 +206,9 @@ class NeuralNetMixin:
 class DeepNeuralNetwork(NeuralNetMixin):
     def __init__(self, layers: List[Tuple[int, str]]):
         self.layer_dims, self.layer_actifun = map(list, zip(*layers))
-
+        self.params = {}
         # Initialize Parameters
-        self.params = self.initialize_parameters()
+        self.initialize_parameters()
 
     def initialize_parameters(self):
         """
@@ -223,22 +222,24 @@ class DeepNeuralNetwork(NeuralNetMixin):
         """
 
         np.random.seed(1)
-        parameters = {}
         L = len(self.layer_dims)  # number of layers in the network
 
         for layer in range(1, L):
-            parameters["W" + str(layer)] = np.random.randn(
+            self.params["W" + str(layer)] = np.random.randn(
                 self.layer_dims[layer], self.layer_dims[layer - 1]
             ) / np.sqrt(self.layer_dims[layer - 1])
-            parameters["b" + str(layer)] = np.zeros((self.layer_dims[layer], 1))
+            self.params["b" + str(layer)] = np.zeros((self.layer_dims[layer], 1))
 
-            assert parameters["W" + str(layer)].shape == (
+            assert self.params["W" + str(layer)].shape == (
                 self.layer_dims[layer],
                 self.layer_dims[layer - 1],
             )
-            assert parameters["b" + str(layer)].shape == (self.layer_dims[layer], 1)
+            assert self.params["b" + str(layer)].shape == (
+                self.layer_dims[layer],
+                1,
+            )
 
-        return parameters
+        return self
 
     def update_parameters(self, grads, learning_rate):
         """
@@ -393,7 +394,7 @@ class DeepNeuralNetwork(NeuralNetMixin):
         if K == 1:
             dA_prev_temp = -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
         else:
-            dA_prev_temp = -np.divide(Y, AL)
+            dA_prev_temp = Y
 
         # Backward pass through all layers.
         for layer in reversed(range(L)):
@@ -445,8 +446,8 @@ class DeepNeuralNetwork(NeuralNetMixin):
 
             # Print the cost every 100 training example
             if print_cost and i % 100 == 0:
-                print("Cost after iteration %i: %f" % (i, cost))
-            if print_cost and i % 100 == 0:
+                accuracy, _, _ = self.predict(X, Y)
+                print("Cost: ", cost, "Train Accuracy:", accuracy)
                 costs.append(cost)
 
         # plot the cost
@@ -455,5 +456,32 @@ class DeepNeuralNetwork(NeuralNetMixin):
         plt.xlabel("iterations (per hundreds)")
         plt.title("Learning rate =" + str(learning_rate))
         plt.show()
-
         return self
+
+    def predict(self, X, y):
+        """
+        Predict
+
+        Arguments:
+        X -- data set of examples you would like to label
+        y -- ground truth (for accuracy calculation)
+
+        Returns:
+        p -- predictions for the given dataset X
+        """
+
+        m = X.shape[1]
+
+        # Forward propagation
+        probas, _ = self.forward_pass(X)
+
+        p = np.where(probas > 0.5, 1, 0)
+
+        if p.shape[0] > 1:
+            p = np.argmax(p, axis=0)
+        if y.shape[0] > 1:
+            y = np.argmax(y, axis=0)
+
+        accuracy = np.sum((p == y) / m)
+
+        return accuracy, p, probas

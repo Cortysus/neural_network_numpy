@@ -12,6 +12,8 @@ ipython = "^7.25.0"
 matplotlib = "^3.4.2"
 jupyterlab = "^3.0.16"
 scipy = "^1.7.0"
+sklearn = "^0.0"
+python-mnist = "^0.7"
 
 [tool.poetry.dev-dependencies]
 black = "^21.6b0"
