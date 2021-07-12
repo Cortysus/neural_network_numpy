@@ -448,7 +448,7 @@ class ANN(ANNMixin):
             # Print the cost every 100 training example
             if print_cost and i % 100 == 0:
                 accuracy, _, _ = self.predict(X, Y)
-                print("Cost: ", cost, "Train Accuracy:", accuracy)
+                print(f"{i} -- Cost: {cost} Train Accuracy: {accuracy}")
                 costs.append(cost)
 
         # plot the cost

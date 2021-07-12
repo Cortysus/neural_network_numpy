@@ -6,11 +6,11 @@ import datasets.mnist.loader as mnist
 
 
 def load_data_cat():
-    train_dataset = h5py.File("datasets/train_catvnoncat.h5", "r")
+    train_dataset = h5py.File("datasets/catvnoncat/train_catvnoncat.h5", "r")
     X_train = np.array(train_dataset["train_set_x"][:])  # your train set features
     y_train = np.array(train_dataset["train_set_y"][:])  # your train set labels
 
-    test_dataset = h5py.File("datasets/test_catvnoncat.h5", "r")
+    test_dataset = h5py.File("datasets/catvnoncat/test_catvnoncat.h5", "r")
     X_test = np.array(test_dataset["test_set_x"][:])  # your test set features
     y_test = np.array(test_dataset["test_set_y"][:])  # your test set labels
 
