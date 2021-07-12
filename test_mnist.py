@@ -16,4 +16,4 @@ model = ANN(layers)
 model.train(X_train, y_train, print_cost=True, num_iterations=1000, learning_rate=0.1)
 
 accuracy, p, probas = model.predict(X_test, y_test)
-print("Accuracy: " + str(accuracy))
+print(f"Accuracy: {accuracy}")
