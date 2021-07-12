@@ -8,7 +8,7 @@ X_train, y_train, X_test, y_test = load_data_mnist()
 layers = [
     (X_train.shape[0], "sigmoid"),
     (50, "sigmoid"),
-    (10, "softmax"),
+    (y_train.shape[0], "softmax"),
 ]
 model = ANN(layers)
 
