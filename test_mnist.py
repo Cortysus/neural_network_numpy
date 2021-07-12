@@ -1,4 +1,4 @@
-from src.nn import DeepNeuralNetwork
+from src.nn import ANN
 from src.utils import load_data_mnist
 
 
@@ -10,7 +10,7 @@ layers = [
     (50, "sigmoid"),
     (10, "softmax"),
 ]
-model = DeepNeuralNetwork(layers)
+model = ANN(layers)
 
 # Train model
 model.train(X_train, y_train, print_cost=True, num_iterations=1000, learning_rate=0.1)

@@ -1,5 +1,5 @@
 from src.utils import load_data_cat
-from src.nn import DeepNeuralNetwork
+from src.nn import ANN
 
 X_train, y_train, X_test, y_test, _ = load_data_cat()
 
@@ -12,7 +12,7 @@ layers = [
     (5, "relu"),
     (1, "sigmoid"),
 ]
-model = DeepNeuralNetwork(layers)
+model = ANN(layers)
 
 # Train model
 model.train(X_train, y_train, print_cost=True, num_iterations=2400)

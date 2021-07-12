@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-class NeuralNetMixin:
+class ANNMixin:
     def sigmoid(self, Z):
         """
         Implements the sigmoid activation in numpy
@@ -204,7 +204,7 @@ class NeuralNetMixin:
         return dA_prev, dW, db
 
 
-class DeepNeuralNetwork(NeuralNetMixin):
+class ANN(ANNMixin):
     def __init__(self, layers: List[Tuple[int, str]]):
         self.layer_dims, self.layer_actifun = map(list, zip(*layers))
         self.params = {}
