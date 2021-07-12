@@ -1,6 +1,7 @@
-import numpy as np
 from typing import List, Tuple
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class NeuralNetMixin:

@@ -1,7 +1,8 @@
 import h5py
 import numpy as np
-import datasets.mnist.loader as mnist
 from sklearn.preprocessing import OneHotEncoder
+
+import datasets.mnist.loader as mnist
 
 
 def load_data_cat():
