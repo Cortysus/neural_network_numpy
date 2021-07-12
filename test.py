@@ -1,10 +1,7 @@
-from src.utils import load_data
+from src.utils import load_data_cat
 from src.nn import DeepNeuralNetwork
 
-X_train, y_train, X_test, y_test, classes = load_data()
-# Reshape the training and test examples
-X_train = X_train.reshape(X_train.shape[0], -1).T / 255.0
-X_test = X_test.reshape(X_test.shape[0], -1).T / 255.0
+X_train, y_train, X_test, y_test, _ = load_data_cat()
 
 # Define Neural Network architecture
 
