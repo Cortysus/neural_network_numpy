@@ -5,10 +5,13 @@ description = ""
 authors = ["Alessio  <alessio.caciagli@okra.ai>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8,<3.10"
 numpy = "^1.21.0"
 h5py = "^3.3.0"
 ipython = "^7.25.0"
+matplotlib = "^3.4.2"
+jupyterlab = "^3.0.16"
+scipy = "^1.7.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.6b0"

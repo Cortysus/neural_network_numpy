@@ -20,4 +20,4 @@ layers = [
 model = DeepNeuralNetwork(layers)
 
 # Train model
-print(model.train(X_train, y_train))
+model.train(X_train, y_train, print_cost=True)

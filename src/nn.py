@@ -1,5 +1,6 @@
 import numpy as np
 from typing import List, Tuple
+import matplotlib.pyplot as plt
 
 
 class NeuralNetMixin:
@@ -14,7 +15,6 @@ class NeuralNetMixin:
         A -- output of sigmoid(z), same shape as Z
         cache -- returns Z as well, useful during backpropagation
         """
-        print(Z)
         A = 1 / (1 + np.exp(-Z))
         cache = Z
         return A, cache
@@ -51,12 +51,75 @@ class NeuralNetMixin:
         cache -- a python dictionary containing "A" ; stored for computing
         the backward pass efficiently
         """
-        print(Z)
         exps = np.exp(Z - Z.max())
         A = exps / np.sum(exps, axis=0)
         cache = Z
 
         return A, cache
+
+    def relu_backward(self, dA, cache):
+        """
+        Implement the backward propagation for a single RELU unit.
+
+        Arguments:
+        dA -- post-activation gradient, of any shape
+        cache -- 'Z' where we store for computing backward propagation efficiently
+
+        Returns:
+        dZ -- Gradient of the cost with respect to Z
+        """
+
+        Z = cache
+        dZ = np.array(dA, copy=True)  # just converting dz to a correct object.
+
+        # When z <= 0, you should set dz to 0 as well.
+        dZ[Z <= 0] = 0
+
+        assert dZ.shape == Z.shape
+
+        return dZ
+
+    def sigmoid_backward(self, dA, cache):
+        """
+        Implement the backward propagation for a single SIGMOID unit.
+
+        Arguments:
+        dA -- post-activation gradient, of any shape
+        cache -- 'Z' where we store for computing backward propagation efficiently
+
+        Returns:
+        dZ -- Gradient of the cost with respect to Z
+        """
+
+        Z = cache
+
+        s = 1 / (1 + np.exp(-Z))
+        dZ = dA * s * (1 - s)
+
+        assert dZ.shape == Z.shape
+
+        return dZ
+
+    def softmax_backward(self, dA, cache):
+        """
+        Implement the backward propagation for a single SOFTMAX unit.
+
+        Arguments:
+        dA -- post-activation gradient, of any shape
+        cache -- 'Z' where we store for computing backward propagation efficiently
+
+        Returns:
+        dZ -- Gradient of the cost with respect to Z
+        """
+
+        Z = cache
+        exps = np.exp(Z - Z.max())
+        s = exps / np.sum(exps, axis=0)
+        dZ = dA * s * (1 - s)
+
+        assert dZ.shape == Z.shape
+
+        return dZ
 
     def linear_forward(self, A, W, b):
         """
@@ -110,6 +173,36 @@ class NeuralNetMixin:
 
         return cost
 
+    def linear_backward(self, dZ, cache):
+        """
+        Implement the linear portion of backward propagation for a single layer
+         (layer l)
+
+        Arguments:
+        dZ -- Gradient of the cost with respect to the linear output
+         (of current layer l)
+        cache -- tuple of values (A_prev, W, b) coming from the forward propagation in
+         the current layer
+
+        Returns:
+        dA_prev -- Gradient of the cost with respect to the activation (of the previous
+         layer l-1), same shape as A_prev
+        dW -- Gradient of the cost with respect to W (current layer l), same shape as W
+        db -- Gradient of the cost with respect to b (current layer l), same shape as b
+        """
+        A_prev, W, b = cache
+        m = A_prev.shape[1]
+
+        dW = 1.0 / m * np.dot(dZ, A_prev.T)
+        db = 1.0 / m * np.sum(dZ, axis=1, keepdims=True)
+        dA_prev = np.dot(W.T, dZ)
+
+        assert dA_prev.shape == A_prev.shape
+        assert dW.shape == W.shape
+        assert db.shape == b.shape
+
+        return dA_prev, dW, db
+
 
 class DeepNeuralNetwork(NeuralNetMixin):
     def __init__(self, layers: List[Tuple[int, str]]):
@@ -146,6 +239,35 @@ class DeepNeuralNetwork(NeuralNetMixin):
             assert parameters["b" + str(layer)].shape == (self.layer_dims[layer], 1)
 
         return parameters
+
+    def update_parameters(self, grads, learning_rate):
+        """
+        Update parameters using gradient descent
+
+        Arguments:
+        parameters -- python dictionary containing your parameters
+        grads -- python dictionary containing your gradients, output of L_model_backward
+
+        Returns:
+        parameters -- python dictionary containing your updated parameters
+                    parameters["W" + str(l)] = ...
+                    parameters["b" + str(l)] = ...
+        """
+
+        L = len(self.params) // 2  # number of layers in the neural network
+
+        # Update rule for each parameter. Use a for loop.
+        for layer in range(L):
+            self.params["W" + str(layer + 1)] = (
+                self.params["W" + str(layer + 1)]
+                - learning_rate * grads["dW" + str(layer + 1)]
+            )
+            self.params["b" + str(layer + 1)] = (
+                self.params["b" + str(layer + 1)]
+                - learning_rate * grads["db" + str(layer + 1)]
+            )
+
+        return self
 
     def linear_activation_forward(self, A_prev, W, b, activation):
         """
@@ -214,7 +336,80 @@ class DeepNeuralNetwork(NeuralNetMixin):
 
         return A, caches
 
-    def train(self, X, Y, print_cost=False):
+    def linear_activation_backward(self, dA, cache, activation):
+        """
+        Implement the backward propagation for the LINEAR->ACTIVATION layer.
+
+        Arguments:
+        dA -- post-activation gradient for current layer l
+        cache -- tuple of values (linear_cache, activation_cache) we store for
+         computing backward propagation efficiently
+        activation -- the activation to be used in this layer, stored as a text string
+
+        Returns:
+        dA_prev -- Gradient of the cost with respect to the activation
+         (of the previous layer l-1), same shape as A_prev
+        dW -- Gradient of the cost with respect to W (current layer l), same shape as W
+        db -- Gradient of the cost with respect to b (current layer l), same shape as b
+        """
+        linear_cache, activation_cache = cache
+
+        if activation == "relu":
+            dZ = self.relu_backward(dA, activation_cache)
+
+        elif activation == "sigmoid":
+            dZ = self.sigmoid_backward(dA, activation_cache)
+
+        elif activation == "softmax":
+            dZ = self.softmax_backward(dA, activation_cache)
+
+        else:
+            raise ValueError(f"Activation function {activation} is not supported.")
+
+        dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
+
+        return dA_prev, dW, db
+
+    def backward_pass(self, AL, Y, caches):
+        """
+        Implement  backward propagation
+
+        Arguments:
+        AL -- probability vector, output of the forward propagation
+        Y -- true "label" vector
+        caches -- list of caches
+        Returns:
+        grads -- A dictionary with the gradients
+                grads["dA" + str(l)] = ...
+                grads["dW" + str(l)] = ...
+                grads["db" + str(l)] = ...
+        """
+        grads = {}
+        L = len(caches)  # the number of layers
+        K = AL.shape[0]
+        Y = Y.reshape(AL.shape)  # after this line, Y is the same shape as AL
+
+        # Initializing the backpropagation
+        if K == 1:
+            dA_prev_temp = -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+        else:
+            dA_prev_temp = -np.divide(Y, AL)
+
+        # Backward pass through all layers.
+        for layer in reversed(range(L)):
+            current_cache = caches[layer]
+            dA_prev_temp, dW_temp, db_temp = self.linear_activation_backward(
+                dA_prev_temp,
+                current_cache,
+                activation=self.layer_actifun[layer + 1],
+            )
+            grads["dA" + str(layer)] = dA_prev_temp
+            grads["dW" + str(layer + 1)] = dW_temp
+            grads["db" + str(layer + 1)] = db_temp
+
+        return grads
+
+    def train(self, X, Y, learning_rate=0.0075, num_iterations=3000, print_cost=False):
         """
         Train the network
 
@@ -235,13 +430,18 @@ class DeepNeuralNetwork(NeuralNetMixin):
         costs = []  # keep track of cost
 
         # Loop (gradient descent)
-        for i in range(0, 1):
-
+        for i in range(0, num_iterations):
             # Forward propagation
             AL, caches = self.forward_pass(X)
 
-            # Compute cost.
+            # Compute cost
             cost = self.compute_cost(AL, Y)
+
+            # Backward propagation
+            grads = self.backward_pass(AL, Y, caches)
+
+            # Update parameters
+            self.update_parameters(grads, learning_rate)
 
             # Print the cost every 100 training example
             if print_cost and i % 100 == 0:
@@ -249,4 +449,11 @@ class DeepNeuralNetwork(NeuralNetMixin):
             if print_cost and i % 100 == 0:
                 costs.append(cost)
 
-        return cost
+        # plot the cost
+        plt.plot(np.squeeze(costs))
+        plt.ylabel("cost")
+        plt.xlabel("iterations (per hundreds)")
+        plt.title("Learning rate =" + str(learning_rate))
+        plt.show()
+
+        return self
